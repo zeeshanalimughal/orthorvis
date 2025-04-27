@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import AuthService from '../services/auth.service';
 import { toast } from 'sonner';
+import { loginAction, logoutAction, registerAction } from '@/app/actions/auth.actions';
 
 interface User {
   id: string;
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user, message } = await AuthService.login({ email, password });
       setUser(user);
       toast.success(message || 'Login successful');
+      await loginAction({ user, message })
       router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
@@ -82,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user, message } = await AuthService.register({ fullName, email, password });
       setUser(user);
       toast.success(message || 'Registration successful');
+      await registerAction({ user, message })
       router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await AuthService.logout();
       setUser(null);
       toast.success('Logout successful');
+      await logoutAction()
       router.push('/login');
       return { success: true };
     } catch (error: unknown) {

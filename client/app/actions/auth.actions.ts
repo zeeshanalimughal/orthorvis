@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import AuthService, {
   AuthResponse,
   LoginData,
@@ -10,9 +11,16 @@ import AuthService, {
 /**
  * Server action to handle user login
  */
-export async function loginAction(data: LoginData) {
+export async function loginAction(response: AuthResponse) {
   try {
-    const response = await AuthService.login(data);
+    const cookieStore = await cookies();
+    cookieStore.set("auth-token", response.token || "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax",
+    });
+
     return { success: true, data: response as AuthResponse };
   } catch (error: unknown) {
     const errorMessage =
@@ -28,9 +36,17 @@ export async function loginAction(data: LoginData) {
 /**
  * Server action to handle user registration
  */
-export async function registerAction(data: RegisterData) {
+export async function registerAction(response: AuthResponse) {
   try {
-    const response = await AuthService.register(data);
+    const cookieStore = await cookies();
+    cookieStore.set("auth-token", response.token || "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+      sameSite: "lax",
+    });
+
     return { success: true, data: response };
   } catch (error: unknown) {
     const errorMessage =
@@ -48,7 +64,8 @@ export async function registerAction(data: RegisterData) {
  */
 export async function logoutAction() {
   try {
-    await AuthService.logout();
+    const cookieStore = await cookies();
+    cookieStore.delete("auth-token");
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Logout failed";
@@ -65,7 +82,8 @@ export async function logoutAction() {
  */
 export async function checkAuthAction() {
   const cookieStore = await cookies();
-  const authToken = cookieStore.get("token");
+  const authToken = cookieStore.get("auth-token");
+  console.log(111, authToken);
   if (!authToken) {
     return { isAuthenticated: false };
   }
@@ -76,8 +94,8 @@ export async function checkAuthAction() {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to check authentication";
-
     console.error(errorMessage);
+    cookieStore.delete("auth-token");
     return { isAuthenticated: false };
   }
 }
