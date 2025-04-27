@@ -101,14 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const token = await getToken()
-      await AuthService.logout(token || '');
       await logoutAction()
       toast.success('Logout successful');
-      setTimeout(() => {
-        setUser(null);
-        router.push('/login');
-      }, 1000)
+      setUser(null);
+      router.push('/login');
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error
