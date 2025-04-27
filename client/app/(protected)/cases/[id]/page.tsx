@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getToken } from '@/app/actions/auth.actions';
 
 
 
@@ -58,7 +59,8 @@ export default function CaseDetailPage() {
   const loadCaseData = async () => {
     setIsLoading(true);
     try {
-      const response = await CaseService.getCase(id);
+      const token = await getToken()
+      const response = await CaseService.getCase(id, token as string);
       if (response.success && response.data) {
         setCaseData(response.data);
       } else {
@@ -76,7 +78,8 @@ export default function CaseDetailPage() {
 
   const handleEditSubmit = async (data: CaseFormData) => {
     try {
-      const response = await CaseService.updateCase(id, data);
+      const token = await getToken()
+      const response = await CaseService.updateCase(id, data, token || "");
       if (response.success) {
         setCaseData(response.data);
         setIsEditing(false);
@@ -91,7 +94,8 @@ export default function CaseDetailPage() {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await CaseService.deleteCase(id);
+      const token = await getToken()
+      const response = await CaseService.deleteCase(id, token || '');
       if (response.success) {
         toast.success('Case deleted successfully');
         router.push('/dashboard');
@@ -114,10 +118,11 @@ export default function CaseDetailPage() {
     if (selectedFiles.length === 0) return;
 
     try {
-      const uploadResponse = await FileService.uploadFiles(selectedFiles, progressCallback);
+      const token = await getToken()
+      const uploadResponse = await FileService.uploadFiles(selectedFiles, progressCallback, token || '');
 
       if (uploadResponse.success && uploadResponse.data.length > 0) {
-        const associateResponse = await FileService.associateFilesWithCase(id, uploadResponse.data);
+        const associateResponse = await FileService.associateFilesWithCase(id, uploadResponse.data, token || '');
 
         if (associateResponse.success) {
           setCaseData(associateResponse.data);

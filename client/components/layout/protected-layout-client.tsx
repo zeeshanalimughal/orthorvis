@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import AuthService from '@/lib/services/auth.service';
 import { User } from '@/lib/types/user.types';
 import { Header } from '@/components/layout/header';
+import { getToken } from '@/app/actions/auth.actions';
 
 interface ProtectedLayoutClientProps {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ export function ProtectedLayoutClient({ children }: ProtectedLayoutClientProps) 
     const init = async () => {
       setIsLoading(true);
       try {
-        const response = await AuthService.getCurrentUser();
+        const token = await getToken()
+        const response = await AuthService.getCurrentUser(token || '');
         if (response.user) {
           setUser(response.user);
         } else {

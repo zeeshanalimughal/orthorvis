@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { getToken } from '@/app/actions/auth.actions';
 
 export default function CasesDashboardPage() {
   const router = useRouter();
@@ -38,7 +39,8 @@ export default function CasesDashboardPage() {
   const loadCases = async () => {
     setIsLoading(true);
     try {
-      const response = await CaseService.getCases(filters);
+      const token = await getToken()
+      const response = await CaseService.getCases(filters, token || '');
       setCases(response.data);
 
       const paginationData = {

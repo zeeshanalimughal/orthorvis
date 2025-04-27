@@ -26,6 +26,7 @@ export interface ErrorResponse {
   statusCode?: number;
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 const AuthService = {
   /**
    * Register a new user
@@ -110,20 +111,21 @@ const AuthService = {
   },
 
   getSession: async (token: string): Promise<AuthResponse | null> => {
+    const baseUrl =
+      process.env.NODE_ENV == "development"
+        ? "http://localhost:5000/api/v1"
+        : "https://orthorvis.onrender.com/api/v1";
     if (!token) {
       return null;
     }
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/profile`,
-        {
-          cache: "no-store",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${baseUrl}/auth/me`, {
+        cache: "no-store",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) return null;
       return await response.json();
     } catch (error: any) {

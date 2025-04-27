@@ -44,7 +44,8 @@ const FileService = {
    */
   async uploadFiles(
     files: File[],
-    onProgress?: UploadProgressCallback
+    onProgress?: UploadProgressCallback,
+    token?: string
   ): Promise<UploadResponse> {
     try {
       if (onProgress) {
@@ -60,6 +61,7 @@ const FileService = {
       const response = await axios.post("/files/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: "Bearer " + token,
         },
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
@@ -90,12 +92,21 @@ const FileService = {
    */
   async associateFilesWithCase(
     caseId: string,
-    files: UploadedFile[]
+    files: UploadedFile[],
+    token: string
   ): Promise<AssociateFilesResponse> {
     try {
-      const response = await axios.post(`/files/associate/${caseId}`, {
-        files,
-      });
+      const response = await axios.post(
+        `/files/associate/${caseId}`,
+        {
+          files,
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error(`Error associating files with case ${caseId}:`, error);

@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const ErrorResponse = require('../utils/errorResponse');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const ErrorResponse = require("../utils/errorResponse");
+const User = require("../models/User");
 
 // Authenticate user middleware
 exports.isAuthenticated = async (req, res, next) => {
@@ -8,15 +8,15 @@ exports.isAuthenticated = async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.startsWith("Bearer")
   ) {
-    token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies.token) {
-    token = req.cookies.token;
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies["auth-token"]) {
+    token = req.cookies["auth-token"];
   }
 
   if (!token) {
-    return next(new ErrorResponse('Not authorized to access this route', 401));
+    return next(new ErrorResponse("Not authorized to access this route", 401));
   }
 
   try {
@@ -26,6 +26,6 @@ exports.isAuthenticated = async (req, res, next) => {
 
     next();
   } catch (err) {
-    return next(new ErrorResponse('Not authorized to access this route', 401));
+    return next(new ErrorResponse("Not authorized to access this route", 401));
   }
 };

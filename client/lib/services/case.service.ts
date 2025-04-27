@@ -10,7 +10,10 @@ const CaseService = {
   /**
    * Get cases with optional filtering and pagination
    */
-  async getCases(filters: CaseFilters = {}): Promise<CaseListResponse> {
+  async getCases(
+    filters: CaseFilters = {},
+    token: string
+  ): Promise<CaseListResponse> {
     try {
       const params = new URLSearchParams();
 
@@ -20,7 +23,11 @@ const CaseService = {
         }
       });
 
-      const response = await axios.get(`/cases?${params.toString()}`);
+      const response = await axios.get(`/cases?${params.toString()}`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error("Error fetching cases:", error);
@@ -31,9 +38,13 @@ const CaseService = {
   /**
    * Get a single case by ID
    */
-  async getCase(id: string): Promise<CaseResponse> {
+  async getCase(id: string, token: string): Promise<CaseResponse> {
     try {
-      const response = await axios.get(`/cases/${id}`);
+      const response = await axios.get(`/cases/${id}`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error(`Error fetching case ${id}:`, error);
@@ -44,9 +55,16 @@ const CaseService = {
   /**
    * Create a new case with patient information
    */
-  async createCase(caseData: CaseFormData): Promise<CaseResponse> {
+  async createCase(
+    caseData: CaseFormData,
+    token: string
+  ): Promise<CaseResponse> {
     try {
-      const response = await axios.post("/cases", caseData);
+      const response = await axios.post("/cases", caseData, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error("Error creating case:", error);
@@ -59,10 +77,15 @@ const CaseService = {
    */
   async updateCase(
     id: string,
-    caseData: Partial<CaseFormData>
+    caseData: Partial<CaseFormData>,
+    token: string
   ): Promise<CaseResponse> {
     try {
-      const response = await axios.put(`/cases/${id}`, caseData);
+      const response = await axios.put(`/cases/${id}`, caseData, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error(`Error updating case ${id}:`, error);
@@ -73,9 +96,13 @@ const CaseService = {
   /**
    * Delete a case
    */
-  async deleteCase(id: string): Promise<{ success: boolean }> {
+  async deleteCase(id: string, token: string): Promise<{ success: boolean }> {
     try {
-      const response = await axios.delete(`/cases/${id}`);
+      const response = await axios.delete(`/cases/${id}`, {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
       return response.data;
     } catch (error) {
       console.error(`Error deleting case ${id}:`, error);

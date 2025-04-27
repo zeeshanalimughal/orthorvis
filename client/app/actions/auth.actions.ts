@@ -11,14 +11,16 @@ import AuthService, {
 /**
  * Server action to handle user login
  */
-export async function loginAction(response: AuthResponse) {
+export async function loginAction(data: LoginData) {
   try {
+    const response = await AuthService.login(data);
     const cookieStore = await cookies();
     cookieStore.set("auth-token", response.token || "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 30,
-      sameSite: "strict",
+      sameSite: "lax",
+      path: "/",
     });
 
     return { success: true, data: response as AuthResponse };
@@ -36,14 +38,16 @@ export async function loginAction(response: AuthResponse) {
 /**
  * Server action to handle user registration
  */
-export async function registerAction(response: AuthResponse) {
+export async function registerAction(data: RegisterData) {
   try {
+    const response = await AuthService.register(data);
     const cookieStore = await cookies();
     cookieStore.set("auth-token", response.token || "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 30,
-      sameSite: "strict",
+      sameSite: "lax",
+      path: "/",
     });
 
     return { success: true, data: response };
@@ -99,5 +103,17 @@ export async function checkAuthAction() {
     console.error(errorMessage);
     cookieStore.delete("auth-token");
     return { isAuthenticated: false };
+  }
+}
+
+export async function getToken() {
+  try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get("auth-token");
+    if (!authToken) return null;
+    return authToken.value;
+  } catch (e: any) {
+    console.log("Error:", e);
+    return null;
   }
 }

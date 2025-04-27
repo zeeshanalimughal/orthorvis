@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import AuthService from '../services/auth.service';
 import { toast } from 'sonner';
-import { loginAction, logoutAction, registerAction } from '@/app/actions/auth.actions';
+import { getToken, loginAction, logoutAction, registerAction } from '@/app/actions/auth.actions';
 
 interface User {
   id: string;
@@ -40,8 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return false;
         }
       }
-
-      const response = await AuthService.getCurrentUser();
+      const token = await getToken()
+      const response = await AuthService.getCurrentUser(token || '');
 
       if (response.user) {
         setUser(response.user);
@@ -64,11 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const { user, message, token } = await AuthService.login({ email, password });
-      setUser(user);
-      toast.success(message || 'Login successful');
-      await loginAction({ user, message, token })
-      router.push('/dashboard');
+      const { data } = await loginAction({ email, password });
+      if (data) {
+        setUser(data.user);
+        toast.success(data.message || 'Login successful');
+        router.push('/dashboard');
+      }
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error
@@ -81,11 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (fullName: string, email: string, password: string) => {
     try {
-      const { user, message, token } = await AuthService.register({ fullName, email, password });
-      setUser(user);
-      toast.success(message || 'Registration successful');
-      await registerAction({ user, message, token })
-      router.push('/dashboard');
+      const { data } = await registerAction({ fullName, email, password });
+      if (data) {
+        setUser(user);
+        toast.success(data.message || 'Registration successful');
+        router.push('/dashboard');
+      }
+
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error

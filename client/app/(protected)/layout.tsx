@@ -4,11 +4,11 @@ import { ProtectedLayoutClient } from '@/components/layout/protected-layout-clie
 import { checkAuthAction } from '../actions/auth.actions';
 
 export default async function ProtectedLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = await checkAuthAction()
+  // const { isAuthenticated } = await checkAuthAction()
 
-  if (!isAuthenticated) {
-    redirect('/login');
-  }
+  // if (!isAuthenticated) {
+  //   redirect('/login');
+  // }
 
   return <ProtectedLayoutClient>{children}</ProtectedLayoutClient>;
 }

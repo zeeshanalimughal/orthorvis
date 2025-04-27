@@ -12,6 +12,7 @@ import { CaseFormData } from '@/lib/types/case.types';
 import { toast } from 'sonner';
 import CaseService from '@/lib/services/case.service';
 import FileService from '@/lib/services/file.service';
+import { getToken } from '@/app/actions/auth.actions';
 
 export default function CreateCasePage() {
   const router = useRouter();
@@ -59,17 +60,18 @@ export default function CreateCasePage() {
     setUploadProgress(0);
 
     try {
-      const caseResponse = await CaseService.createCase(patientData);
+      const token = await getToken()
+      const caseResponse = await CaseService.createCase(patientData, token || '');
       const caseId = caseResponse.data._id;
 
       if (files.length > 0) {
         const uploadResponse = await FileService.uploadFiles(files, (progress) => {
           setUploadProgress(progress);
-        });
+        }, token || '');
 
         if (uploadResponse.success && uploadResponse.data.length > 0) {
           setUploadProgress(80);
-          await FileService.associateFilesWithCase(caseId, uploadResponse.data);
+          await FileService.associateFilesWithCase(caseId, uploadResponse.data, token || '');
           setUploadProgress(100);
         }
       }
