@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const { user, message } = await AuthService.login({ email, password });
+      const { user, message, token } = await AuthService.login({ email, password });
       setUser(user);
       toast.success(message || 'Login successful');
       await loginAction({ user, message, token })
