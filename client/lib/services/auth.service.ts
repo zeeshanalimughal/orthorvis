@@ -108,6 +108,29 @@ const AuthService = {
       throw new Error(errorMessage);
     }
   },
+
+  getSession: async (token: string): Promise<AuthResponse | null> => {
+    if (!token) {
+      return null;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/profile`,
+        {
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error: any) {
+      console.log("Error while getting session", error);
+      return null;
+    }
+  },
 };
 
 export default AuthService;

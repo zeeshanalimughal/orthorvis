@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ThemeToggle } from '../theme-toggle';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/context/auth-context';
 
 interface HeaderProps {
   user: User | null;
@@ -34,12 +35,11 @@ export function Header({ user }: HeaderProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme } = useTheme()
   const isDashboard = pathname === '/dashboard';
-
+  const { logout } = useAuth()
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await AuthService.logout();
-      router.push('/login');
+      await logout()
     } catch (error) {
       toast({
         title: 'Logout failed',

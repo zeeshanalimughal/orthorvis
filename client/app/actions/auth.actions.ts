@@ -83,20 +83,21 @@ export async function logoutAction() {
 export async function checkAuthAction() {
   const cookieStore = await cookies();
   const authToken = cookieStore.get("auth-token");
-  console.log(111, authToken);
   if (!authToken) {
     return { isAuthenticated: false };
   }
 
   try {
-    await AuthService.getCurrentUser(authToken.value || "");
+    const response = await AuthService.getSession(authToken.value || "");
+    if (!response) {
+      return { isAuthenticated: false };
+    }
     return { isAuthenticated: true };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to check authentication";
     console.error(errorMessage);
     cookieStore.delete("auth-token");
-    cookieStore.delete("token");
     return { isAuthenticated: false };
   }
 }

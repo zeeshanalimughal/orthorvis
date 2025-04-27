@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (fullName: string, email: string, password: string) => {
     try {
-      const { user, message,token } = await AuthService.register({ fullName, email, password });
+      const { user, message, token } = await AuthService.register({ fullName, email, password });
       setUser(user);
       toast.success(message || 'Registration successful');
       await registerAction({ user, message, token })
@@ -100,9 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await AuthService.logout();
       await logoutAction()
-      setUser(null);
       toast.success('Logout successful');
-      router.push('/login');
+      setTimeout(() => {
+        setUser(null);
+        router.push('/login');
+      }, 1000)
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error
