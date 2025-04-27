@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { user, message } = await AuthService.login({ email, password });
       setUser(user);
       toast.success(message || 'Login successful');
-      await loginAction({ user, message })
+      await loginAction({ user, message, token })
       router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
@@ -81,10 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (fullName: string, email: string, password: string) => {
     try {
-      const { user, message } = await AuthService.register({ fullName, email, password });
+      const { user, message,token } = await AuthService.register({ fullName, email, password });
       setUser(user);
       toast.success(message || 'Registration successful');
-      await registerAction({ user, message })
+      await registerAction({ user, message, token })
       router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
