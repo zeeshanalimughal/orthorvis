@@ -10,7 +10,6 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Orthorvis - Patient Case Management",
-  description: "A CRUD system for patient case management",
 };
 
 export default function RootLayout({
