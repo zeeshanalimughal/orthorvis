@@ -99,9 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await AuthService.logout();
+      await logoutAction()
       setUser(null);
       toast.success('Logout successful');
-      await logoutAction()
       router.push('/login');
       return { success: true };
     } catch (error: unknown) {

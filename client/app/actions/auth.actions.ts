@@ -65,6 +65,7 @@ export async function logoutAction() {
   try {
     const cookieStore = await cookies();
     cookieStore.delete("auth-token");
+    cookieStore.delete("token");
   } catch (error: unknown) {
     const errorMessage =
       error instanceof Error ? error.message : "Logout failed";
@@ -88,13 +89,14 @@ export async function checkAuthAction() {
   }
 
   try {
-    await AuthService.getCurrentUser(authToken.value);
+    await AuthService.getCurrentUser(authToken.value || "");
     return { isAuthenticated: true };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to check authentication";
     console.error(errorMessage);
     cookieStore.delete("auth-token");
+    cookieStore.delete("token");
     return { isAuthenticated: false };
   }
 }
