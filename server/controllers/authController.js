@@ -1,7 +1,7 @@
-const User = require('../models/User');
-const ErrorResponse = require('../utils/errorResponse');
-const { logger } = require('../utils/logger');
-const { registerService, loginService } = require('../services/authService');
+const User = require("../models/User");
+const ErrorResponse = require("../utils/errorResponse");
+const { logger } = require("../utils/logger");
+const { registerService, loginService } = require("../services/authService");
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -10,11 +10,14 @@ exports.register = async (req, res, next) => {
   try {
     const { fullName, email, password } = req.body;
 
-    req.logger.info({ fullName, email: email.toLowerCase() }, 'User registration attempt');
+    req.logger.info(
+      { fullName, email: email.toLowerCase() },
+      "User registration attempt"
+    );
 
     const user = await registerService(fullName, email, password);
 
-    req.logger.info({ userId: user._id }, 'User registered successfully');
+    req.logger.info({ userId: user._id }, "User registered successfully");
     sendTokenResponse(user, 201, res);
   } catch (err) {
     next(err);
@@ -28,16 +31,18 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    req.logger.info({ email: email?.toLowerCase() }, 'Login attempt');
+    req.logger.info({ email: email?.toLowerCase() }, "Login attempt");
 
     if (!email || !password) {
-      req.logger.warn({ email }, 'Login attempt missing email or password');
-      return next(new ErrorResponse('Please provide an email and password', 400));
+      req.logger.warn({ email }, "Login attempt missing email or password");
+      return next(
+        new ErrorResponse("Please provide an email and password", 400)
+      );
     }
 
     const user = await loginService(email, password);
 
-    req.logger.info({ userId: user._id }, 'User logged in successfully');
+    req.logger.info({ userId: user._id }, "User logged in successfully");
     sendTokenResponse(user, 200, res);
   } catch (err) {
     next(err);
@@ -49,7 +54,7 @@ exports.login = async (req, res, next) => {
 // @access  Private
 exports.getMe = async (req, res, next) => {
   try {
-    req.logger.info({ userId: req.user.id }, 'Get current user profile');
+    req.logger.info({ userId: req.user.id }, "Get current user profile");
     const user = await User.findById(req.user.id);
 
     res.status(200).json({
@@ -57,9 +62,9 @@ exports.getMe = async (req, res, next) => {
       user: {
         id: user._id,
         fullName: user.fullName,
-        email: user.email
+        email: user.email,
       },
-      message: 'User profile retrieved successfully'
+      message: "User profile retrieved successfully",
     });
   } catch (err) {
     next(err);
@@ -70,16 +75,16 @@ exports.getMe = async (req, res, next) => {
 // @route   GET /api/v1/auth/logout
 // @access  Private
 exports.logout = async (req, res, next) => {
-  req.logger.info({ userId: req.user.id }, 'User logged out');
-  
-  res.cookie('token', '', {
+  req.logger.info({ userId: req.user.id }, "User logged out");
+
+  res.cookie("token", "", {
     expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
+    httpOnly: true,
   });
 
   res.status(200).json({
     success: true,
-    data: {}
+    data: {},
   });
 };
 
@@ -90,24 +95,26 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true
+    httpOnly: true,
+    sameSite: "None",
   };
 
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     options.secure = true;
   }
 
   res
     .status(statusCode)
-    .cookie('token', token, options)
+    .cookie("token", token, options)
     .json({
       success: true,
       token,
       user: {
         id: user._id,
         fullName: user.fullName,
-        email: user.email
+        email: user.email,
       },
-      message: statusCode === 201 ? 'Registration successful' : 'Login successful'
+      message:
+        statusCode === 201 ? "Registration successful" : "Login successful",
     });
 };
