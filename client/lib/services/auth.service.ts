@@ -63,9 +63,14 @@ const AuthService = {
   /**
    * Logout user
    */
-  logout: async (): Promise<{ message: string }> => {
+  logout: async (token: string): Promise<{ message: string }> => {
     try {
-      const response = await api.get<{ message: string }>("/auth/logout");
+      const response = await api.get<{ message: string }>("/auth/logout", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Logout failed";

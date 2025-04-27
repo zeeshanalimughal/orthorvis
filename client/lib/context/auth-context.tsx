@@ -101,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await AuthService.logout();
+      const token = await getToken()
+      await AuthService.logout(token || '');
       await logoutAction()
       toast.success('Logout successful');
       setTimeout(() => {
