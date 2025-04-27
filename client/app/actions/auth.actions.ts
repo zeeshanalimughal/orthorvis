@@ -18,8 +18,7 @@ export async function loginAction(response: AuthResponse) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-      sameSite: "none",
+      sameSite: "strict",
     });
 
     return { success: true, data: response as AuthResponse };
@@ -44,8 +43,7 @@ export async function registerAction(response: AuthResponse) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-      sameSite: "none",
+      sameSite: "strict",
     });
 
     return { success: true, data: response };
