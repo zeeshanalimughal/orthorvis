@@ -12,6 +12,7 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
+  token?: string
   user: {
     id: string;
     fullName: string;
