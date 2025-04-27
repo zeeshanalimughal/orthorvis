@@ -12,7 +12,7 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  token?: string
+  token?: string;
   user: {
     id: string;
     fullName: string;
@@ -75,9 +75,15 @@ const AuthService = {
   /**
    * Get current user profile
    */
-  getCurrentUser: async (): Promise<AuthResponse> => {
+  getCurrentUser: async (token?: string): Promise<AuthResponse> => {
     try {
-      const response = await api.get("/auth/me");
+      const headers: any = {};
+      if (token) {
+        headers["Authorization"] = "Bearer " + token;
+      }
+      const response = await api.get("/auth/me", {
+        headers,
+      });
       console.log("Raw response from /auth/me:", response.data);
 
       const responseData = response.data;

@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import AuthService from '../services/auth.service';
 import { toast } from 'sonner';
-import { loginAction, logoutAction, registerAction } from '@/app/actions/auth.actions';
 
 interface User {
   id: string;
@@ -41,12 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      console.log('Fetching current user...');
       const response = await AuthService.getCurrentUser();
-      console.log('Current user response:', response);
 
       if (response.user) {
-        console.log('Setting user:', response.user);
         setUser(response.user);
         return true;
       } else {
@@ -67,12 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const { success, data } = await loginAction({ email, password });
-      if (success && data) {
-        setUser(data.user);
-        toast.success(data?.message || 'Login successful');
-        router.push('/dashboard');
-      }
+      const { user, message } = await AuthService.login({ email, password });
+      setUser(user);
+      toast.success(message || 'Login successful');
+      router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error
@@ -85,12 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (fullName: string, email: string, password: string) => {
     try {
-      const { data, success } = await registerAction({ fullName, email, password });
-      if (success && data) {
-        setUser(user);
-        toast.success(data.message || 'Registration successful');
-        router.push('/dashboard');
-      }
+      const { user, message } = await AuthService.register({ fullName, email, password });
+      setUser(user);
+      toast.success(message || 'Registration successful');
+      router.push('/dashboard');
       return { success: true };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error
@@ -103,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await logoutAction();
+      await AuthService.logout();
       setUser(null);
       toast.success('Logout successful');
       router.push('/login');
