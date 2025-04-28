@@ -3,24 +3,18 @@ const fs = require("fs");
 const ErrorResponse = require("../utils/errorResponse");
 const Case = require("../models/Case");
 
-// Base directory for uploads relative to server root
 const UPLOADS_DIR = "uploads";
 const UPLOADS_FULL_PATH = path.join(__dirname, "..", UPLOADS_DIR);
 
-// Helper function to validate file types
-const isValidFileType = (file) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "application/dicom",
-    "application/octet-stream",
-  ];
-
-  return (
-    allowedTypes.includes(file.mimetype) ||
-    file.name.endsWith(".dcm") ||
-    file.name.endsWith(".dicom")
-  );
+const isValidDicomFile = (filePath) => {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    if (buffer.length < 132) return false;
+    const dicmSignature = buffer.toString("utf8", 128, 132);
+    return dicmSignature === "DICM";
+  } catch (error) {
+    return false;
+  }
 };
 
 // @desc    Upload files
@@ -48,18 +42,6 @@ exports.uploadFiles = async (req, res, next) => {
       fileArray = [req.files.files];
     }
 
-    // Validate file types
-    for (const file of fileArray) {
-      if (!isValidFileType(file)) {
-        return next(
-          new ErrorResponse(
-            `File ${file.name} is not an allowed type. Allowed types: JPEG, PNG`,
-            400
-          )
-        );
-      }
-    }
-
     const uploadedFiles = [];
     for (const file of fileArray) {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -69,6 +51,18 @@ exports.uploadFiles = async (req, res, next) => {
       const fullPath = path.join(UPLOADS_FULL_PATH, fileName);
 
       await file.mv(fullPath);
+
+      const isValidDicom = isValidDicomFile(fullPath);
+
+      if (!isValidDicom) {
+        fs.unlinkSync(fullPath);
+        return next(
+          new ErrorResponse(
+            `Uploaded file ${file.name} is not a valid DICOM file.`,
+            400
+          )
+        );
+      }
 
       uploadedFiles.push({
         name: file.name,

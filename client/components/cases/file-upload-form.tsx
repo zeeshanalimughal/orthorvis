@@ -4,9 +4,8 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Upload, File, Loader2 } from 'lucide-react';
+import { X, Upload, File, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
 interface FileUploadFormProps {
   files: File[];
@@ -15,6 +14,24 @@ interface FileUploadFormProps {
   isLoading: boolean;
 }
 
+const validateDicomFile = async (file: File): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const buffer = event.target?.result;
+      if (buffer && buffer instanceof ArrayBuffer) {
+        const bytes = new Uint8Array(buffer);
+        const dicmSignature = String.fromCharCode(...bytes.slice(128, 132));
+        resolve(dicmSignature === 'DICM');
+      } else {
+        resolve(false);
+      }
+    };
+    reader.onerror = () => resolve(false);
+    reader.readAsArrayBuffer(file.slice(0, 132));
+  });
+};
+
 export function FileUploadForm({
   files,
   onFilesSelected,
@@ -22,68 +39,50 @@ export function FileUploadForm({
   isLoading
 }: FileUploadFormProps) {
   const [overallProgress, setOverallProgress] = useState<number>(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const updateOverallProgress = (progress: number) => {
     setOverallProgress(progress);
   };
 
-  const [filePreviews, setFilePreviews] = useState<Record<string, string>>({});
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    setErrorMessage(null);
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
 
-  const createFilePreview = (file: File) => {
-    if (!file.type.startsWith('image/')) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        setFilePreviews(prev => ({
-          ...prev,
-          [file.name]: e.target?.result as string
-        }));
+    for (const file of acceptedFiles) {
+      const isValidDicom = await validateDicomFile(file);
+      if (isValidDicom) {
+        validFiles.push(file);
+      } else {
+        invalidFiles.push(file.name || 'Unnamed file');
       }
-    };
-    reader.readAsDataURL(file);
-  };
+    }
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const validFiles = acceptedFiles.filter(
-      file => file.type === 'application/dicom' ||
-        file.name.endsWith('.dcm') ||
-        file.type === 'image/jpeg' ||
-        file.type === 'image/png'
-    );
-
-    validFiles.forEach(file => {
-      createFilePreview(file);
-    });
-
-    onFilesSelected(validFiles);
-
-    if (validFiles.length > 0) {
-      updateOverallProgress(0);
+    if (invalidFiles.length > 0) {
+      setErrorMessage(`The following files are not valid DICOM files: ${invalidFiles.join(', ')}`);
+      onFilesSelected([]);
+    } else {
+      onFilesSelected(validFiles);
+      if (validFiles.length > 0) {
+        updateOverallProgress(0);
+      }
     }
   }, [onFilesSelected]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'application/dicom': ['.dcm', '.dicom'],
-      'application/octet-stream': ['.dcm', '.dicom'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png']
-    }
+    noDragEventsBubbling: true,
+    multiple: true,
+    noClick: false,
+    noKeyboard: true,
+    accept: {},
   });
 
   const removeFile = (index: number) => {
-    const fileToRemove = files[index];
     const newFiles = [...files];
     newFiles.splice(index, 1);
     onFilesSelected(newFiles);
-
-    setFilePreviews(prev => {
-      const updated = { ...prev };
-      delete updated[fileToRemove.name];
-      return updated;
-    });
 
     if (newFiles.length === 0) {
       setOverallProgress(0);
@@ -93,6 +92,13 @@ export function FileUploadForm({
   return (
     <div className="space-y-6">
       <div className="text-xl font-semibold mb-4">Step 2: Upload Files</div>
+
+      {errorMessage && (
+        <div className="flex items-center gap-2 p-4 border border-red-400 bg-red-100 text-red-700 rounded-md">
+          <AlertCircle className="h-5 w-5" />
+          <span className="text-sm">{errorMessage}</span>
+        </div>
+      )}
 
       <div
         {...getRootProps()}
@@ -104,14 +110,21 @@ export function FileUploadForm({
         )}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center justify-center">
-          <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium mb-1">Drag & drop files here</p>
-          <p className="text-sm text-muted-foreground mb-4">or click to select files</p>
-          <Button variant="outline" type="button">
-            Select Files
-          </Button>
-        </div>
+        {isDragActive ? (
+          <div className="text-center">
+            <Upload className="h-10 w-10 mx-auto mb-2 text-primary" />
+            <p>Drop the DICOM files here...</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <Upload className="h-10 w-10 mx-auto mb-2" />
+            <p className="mb-1">Drag & drop DICOM files here, or click to select files</p>
+            <p className="text-xs text-muted-foreground">Only pure DICOM files are supported</p>
+          </div>
+        )}
+        <Button variant="outline" type="button" className="mt-4">
+          Select Files
+        </Button>
       </div>
 
       {files.length > 0 && (
@@ -120,20 +133,9 @@ export function FileUploadForm({
           <div className="space-y-3">
             {files.map((file, index) => (
               <div key={`${file.name}-${index}`} className="flex items-start p-3 border rounded-md">
-                {filePreviews[file.name] ? (
-                  <div className="relative h-12 w-12 mr-3">
-                    <Image
-                      src={filePreviews[file.name]}
-                      alt={file.name}
-                      fill
-                      className="object-cover rounded"
-                    />
-                  </div>
-                ) : (
-                  <File className="h-12 w-12 text-muted-foreground mr-3 p-2 border rounded" />
-                )}
+                <File className="h-12 w-12 mr-3 p-2 border rounded text-blue-500" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  <p className="text-sm font-medium truncate">{file.name || 'Unnamed file'}</p>
                   <p className="text-xs text-muted-foreground">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
@@ -172,7 +174,6 @@ export function FileUploadForm({
         <Button
           type="button"
           onClick={() => {
-            // Force progress to 100% for all files before submitting
             if (files.length > 0) {
               updateOverallProgress(100);
             }

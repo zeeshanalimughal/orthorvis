@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Plus, CalendarIcon } from 'lucide-react';
 import { CasesDataTable } from '@/components/cases/cases-data-table';
@@ -14,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { getToken } from '@/app/actions/auth.actions';
+import Link from 'next/link';
+import { useRouter } from 'nextjs-toploader/app';
 
 export default function CasesDashboardPage() {
   const router = useRouter();
@@ -58,9 +59,6 @@ export default function CasesDashboardPage() {
     }
   };
 
-  const handleAddCase = () => {
-    router.push('/cases/create');
-  };
 
   const handleFilterChange = (newFilters: Partial<CaseFilters>) => {
     setFilters(prev => ({
@@ -81,10 +79,12 @@ export default function CasesDashboardPage() {
     <div className="container p-6 mx-auto ">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Patient Cases</h1>
-        <Button onClick={handleAddCase} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Case
-        </Button>
+        <Link href={"/cases/create"}>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Case
+          </Button>
+        </Link>
       </div>
 
       <div className="rounded-md border p-4">

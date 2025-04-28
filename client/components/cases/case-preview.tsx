@@ -3,7 +3,6 @@
 import { CaseFormData } from '@/lib/types/case.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
-import Image from 'next/image';
 import { File as FileIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -36,29 +35,19 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
   };
 
   const renderFilePreview = (file: File, index: number) => {
-    const isImage = file.type.startsWith('image/');
-    
     return (
       <div key={index} className="flex items-center p-3 border rounded-md mb-2">
         <div className="w-12 h-12 mr-4 flex items-center justify-center">
-          {isImage ? (
-            <Image
-              src={URL.createObjectURL(file)}
-              alt={file.name}
-              width={48}
-              height={48}
-              className="object-cover rounded"
-            />
-          ) : (
-            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-              <FileIcon className="h-6 w-6 text-muted-foreground" />
-            </div>
-          )}
+          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+            <FileIcon className="h-6 w-6 text-muted-foreground" />
+          </div>
         </div>
         <div className="flex-1">
           <p className="text-sm font-medium truncate">{file.name}</p>
           <p className="text-xs text-muted-foreground">
-            {(file.size / 1024).toFixed(1)} KB
+            {file.size < 1024 * 1024
+              ? `${(file.size / 1024).toFixed(1)} KB`
+              : `${(file.size / 1024 / 1024).toFixed(2)} MB`}
           </p>
         </div>
       </div>
@@ -68,7 +57,7 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
   return (
     <div className="space-y-6">
       <div className="text-xl font-semibold mb-4">Step 3: Review and Submit</div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -97,7 +86,7 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
                 <p>{getStatusDisplay(patientData.status)}</p>
               </div>
             </div>
-            
+
             {patientData.notes && (
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-1">Notes</h4>
@@ -106,7 +95,7 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
             )}
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Files ({files.length})</CardTitle>
@@ -122,7 +111,7 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Progress bar for file upload */}
       {(isLoading && files.length > 0) && (
         <div className="mt-6">
@@ -132,17 +121,17 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
             <span className="text-sm font-medium">{Math.round(uploadProgress)}%</span>
           </div>
           <p className="text-xs text-muted-foreground mt-1 text-center">
-            {uploadProgress < 80 ? 'Uploading files...' : 
-             uploadProgress < 100 ? 'Associating files with case...' : 
-             'Upload complete!'}  
+            {uploadProgress < 80 ? 'Uploading files...' :
+              uploadProgress < 100 ? 'Associating files with case...' :
+                'Upload complete!'}
           </p>
         </div>
       )}
-      
-      <div className="flex justify-center mt-8">
-        <Button 
-          onClick={onSubmit} 
-          disabled={isLoading} 
+
+      <div className="flex justify-end mt-8">
+        <Button
+          onClick={onSubmit}
+          disabled={isLoading}
           className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
         >
           {isLoading ? (
