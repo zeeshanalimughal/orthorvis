@@ -3,7 +3,7 @@
 import { CaseFormData } from '@/lib/types/case.types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { File as FileIcon, Loader2 } from 'lucide-react';
+import { File as FileIcon, ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
@@ -37,9 +37,10 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
   const renderFilePreview = (file: File, index: number) => {
     return (
       <div key={index} className="flex items-center p-3 border rounded-md mb-2">
-        <div className="w-12 h-12 mr-4 flex items-center justify-center">
-          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-            <FileIcon className="h-6 w-6 text-muted-foreground" />
+        <div className="h-12 w-12 mr-3 overflow-hidden rounded border flex items-center justify-center">
+          <div className="text-center">
+            <ImageIcon className="h-6 w-6 text-blue-500 mx-auto opacity-75" />
+            <span className="text-[8px] text-blue-300 block mt-1">DICOM</span>
           </div>
         </div>
         <div className="flex-1">

@@ -334,20 +334,12 @@ export default function CaseDetailPage() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {caseData.files.map((file) => (
                     <div key={file._id} className="flex items-center p-3 border rounded group relative">
-                      {file.mimetype?.startsWith('image/') ? (
-                        <div className="relative h-12 w-12 mr-3 border rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={FileService.getFileUrl(file.path)}
-                            alt={file.name}
-                            fill
-                            className="object-cover"
-                          />
+                      <div className="h-12 w-12 mr-3 overflow-hidden rounded border flex items-center justify-center">
+                        <div className="text-center">
+                          <ImageIcon className="h-6 w-6 text-blue-500 mx-auto opacity-75" />
+                          <span className="text-[8px] text-blue-300 block mt-1">DICOM</span>
                         </div>
-                      ) : file.mimetype?.includes('dicom') || file.name.toLowerCase().endsWith('.dcm') ? (
-                        <ImageIcon className="h-12 w-12 mr-3 p-2 border rounded text-blue-500" />
-                      ) : (
-                        <File className="h-12 w-12 mr-3 p-2 border rounded" />
-                      )}
+                      </div>
                       <div className="overflow-hidden flex-1">
                         <p className="font-medium truncate">{file.name}</p>
                         <p className="text-sm text-muted-foreground">

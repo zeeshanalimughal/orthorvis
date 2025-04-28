@@ -4,9 +4,8 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Upload, File, Loader2, AlertCircle } from 'lucide-react';
+import { X, Upload, File, Loader2, AlertCircle, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
 interface FileUploadFormProps {
   files: File[];
   onFilesSelected: (files: File[]) => void;
@@ -133,7 +132,12 @@ export function FileUploadForm({
           <div className="space-y-3">
             {files.map((file, index) => (
               <div key={`${file.name}-${index}`} className="flex items-start p-3 border rounded-md">
-                <File className="h-12 w-12 mr-3 p-2 border rounded text-blue-500" />
+                <div className="h-12 w-12 mr-3 overflow-hidden rounded border flex items-center justify-center">
+                    <div className="text-center">
+                      <ImageIcon className="h-6 w-6 text-blue-500 mx-auto opacity-75" />
+                      <span className="text-[8px] text-blue-300 block mt-1">DICOM</span>
+                    </div>
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{file.name || 'Unnamed file'}</p>
                   <p className="text-xs text-muted-foreground">
