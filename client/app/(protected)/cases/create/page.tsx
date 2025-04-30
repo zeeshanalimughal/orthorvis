@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileDigit, User, CheckCircle } from 'lucide-react';
 import { CaseFormData } from '@/lib/types/case.types';
+import { FileItem, FolderStructure } from '@/components/cases/file-upload-form';
 import { toast } from 'sonner';
 import CaseService from '@/lib/services/case.service';
 import FileService from '@/lib/services/file.service';
@@ -29,7 +30,8 @@ export default function CreateCasePage() {
     birthDate: new Date(),
     notes: ''
   });
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [folderStructure, setFolderStructure] = useState<FolderStructure>({});
 
   const handlePatientInfoSubmit = (data: CaseFormData) => {
     setPatientData(data);
@@ -42,8 +44,11 @@ export default function CreateCasePage() {
     window.scrollTo(0, 0);
   };
 
-  const handleFilesSelected = (selectedFiles: File[]) => {
+  const handleFilesSelected = (selectedFiles: FileItem[], structure?: FolderStructure) => {
     setFiles(selectedFiles);
+    if (structure) {
+      setFolderStructure(structure);
+    }
   };
 
   const handleBack = () => {
@@ -65,13 +70,23 @@ export default function CreateCasePage() {
       const caseId = caseResponse.data._id;
 
       if (files.length > 0) {
-        const uploadResponse = await FileService.uploadFiles(files, (progress) => {
-          setUploadProgress(progress);
-        }, token || '');
+        const uploadResponse = await FileService.uploadFiles(
+          files, 
+          (progress) => {
+            setUploadProgress(progress);
+          }, 
+          token || '',
+          folderStructure
+        );
 
         if (uploadResponse.success && uploadResponse.data.length > 0) {
           setUploadProgress(80);
-          await FileService.associateFilesWithCase(caseId, uploadResponse.data, token || '');
+          await FileService.associateFilesWithCase(
+            caseId, 
+            uploadResponse.data, 
+            token || '',
+            folderStructure
+          );
           setUploadProgress(100);
         }
       }
@@ -142,7 +157,7 @@ export default function CreateCasePage() {
           />
         ) : step === 2 ? (
           <FileUploadForm
-            files={files}
+            files={files as any[]}
             onFilesSelected={handleFilesSelected}
             onSubmit={handleFileUploadComplete}
             isLoading={false}
@@ -150,7 +165,7 @@ export default function CreateCasePage() {
         ) : (
           <CasePreview
             patientData={patientData}
-            files={files}
+            files={files as any[]}
             onSubmit={handleSubmit}
             isLoading={isLoading}
             uploadProgress={uploadProgress}

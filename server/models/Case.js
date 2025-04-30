@@ -51,6 +51,10 @@ const CaseSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        relativePath: {
+          type: String,
+          default: '',
+        },
         size: {
           type: Number,
           required: true,
@@ -65,6 +69,18 @@ const CaseSchema = new mongoose.Schema(
         },
       },
     ],
+    
+    folderStructure: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    
+    folderName: {
+      type: String,
+      default: function() {
+        return `case_${this._id}_${Date.now()}`;
+      },
+    },
 
     user: {
       type: mongoose.Schema.Types.ObjectId,

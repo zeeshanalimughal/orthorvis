@@ -114,7 +114,6 @@ exports.getAllCasesService = async (queryParams) => {
   const endIndex = page * limit;
   const total = await Case.countDocuments(query);
 
-  console.log("Final query object:", JSON.stringify(query));
 
   const cases = await Case.find(query)
     .sort(sort)
@@ -217,12 +216,28 @@ exports.deleteCaseService = async (caseId, userId) => {
     return false;
   }
 
+  if (caseToDelete.folderName) {
+    const caseFolderPath = path.join(__dirname, '..', 'uploads', caseToDelete.folderName);
+    try {
+      if (fs.existsSync(caseFolderPath)) {
+        fs.rmdirSync(caseFolderPath, { recursive: true, force: true });
+      }
+    } catch (err) {
+      console.error(`Error deleting case folder ${caseFolderPath}:`, err);
+    }
+  }
+  
   if (caseToDelete.files && caseToDelete.files.length > 0) {
     caseToDelete.files.forEach((file) => {
       try {
-        fs.unlinkSync(file.path);
+        if (file && file.path) {
+          const filePath = path.join(__dirname, '..', file.path);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        }
       } catch (err) {
-        console.error(`Error deleting file ${file.path}:`, err);
+        console.error(`Error deleting file:`, err);
       }
     });
   }
@@ -261,7 +276,19 @@ exports.uploadFilesService = async (caseId, files, userId) => {
  * @param {Object} files - Uploaded files
  */
 async function handleFileUpload(caseId, files) {
-  const uploadDir = path.join(process.cwd(), "uploads", caseId.toString());
+  const caseDoc = await Case.findById(caseId);
+  if (!caseDoc) {
+    throw new Error(`Case not found with ID: ${caseId}`);
+  }
+  
+  // Generate a unique folder name for this case if it doesn't exist
+  if (!caseDoc.folderName) {
+    caseDoc.folderName = `case_${caseDoc._id}_${Date.now()}`;
+    await caseDoc.save();
+  }
+  
+  const caseFolderPath = path.join('uploads', caseDoc.folderName);
+  const uploadDir = path.join(process.cwd(), caseFolderPath);
 
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -277,12 +304,13 @@ async function handleFileUpload(caseId, files) {
     for (const file of files.file) {
       const fileName = `${Date.now()}-${file.name}`;
       const filePath = path.join(uploadDir, fileName);
+      const relativePath = path.join('uploads', caseDoc.folderName, fileName);
 
       await file.mv(filePath);
 
       uploadedFiles.push({
-        name: fileName,
-        path: filePath,
+        name: file.name,
+        path: relativePath,
         size: file.size,
         mimetype: file.mimetype,
         uploadedAt: Date.now(),
@@ -293,12 +321,13 @@ async function handleFileUpload(caseId, files) {
       const file = files[fieldName];
       const fileName = `${Date.now()}-${file.name}`;
       const filePath = path.join(uploadDir, fileName);
+      const relativePath = path.join('uploads', caseDoc.folderName, fileName);
 
       await file.mv(filePath);
 
       uploadedFiles.push({
-        name: fileName,
-        path: filePath,
+        name: file.name,
+        path: relativePath,
         size: file.size,
         mimetype: file.mimetype,
         uploadedAt: Date.now(),

@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PatientInfoForm } from '@/components/cases/patient-info-form';
-import { FileUploadForm } from '@/components/cases/file-upload-form';
+import { FileUploadForm, FileItem, FolderStructure } from '@/components/cases/file-upload-form';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit, Trash2, File, X, Eye, Image as ImageIcon } from 'lucide-react';
 import CaseService from '@/lib/services/case.service';
@@ -48,8 +48,13 @@ export default function CaseDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [caseData, setCaseData] = useState<Case | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<FileItem[]>([]);
   const [isDeletingFile, setIsDeletingFile] = useState(false);
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    setLoaded(true)
+  }, []);
 
   useEffect(() => {
     loadCaseData();
@@ -110,7 +115,7 @@ export default function CaseDetailPage() {
     }
   };
 
-  const handleFilesSelected = (files: File[]) => {
+  const handleFilesSelected = (files: FileItem[], folderStructure?: FolderStructure) => {
     setSelectedFiles(files);
   };
 
@@ -119,7 +124,8 @@ export default function CaseDetailPage() {
 
     try {
       const token = await getToken()
-      const uploadResponse = await FileService.uploadFiles(selectedFiles, progressCallback, token || '');
+      // Pass the case ID to upload files directly to the case folder
+      const uploadResponse = await FileService.uploadFiles(selectedFiles, progressCallback, token || '', undefined, id);
 
       if (uploadResponse.success && uploadResponse.data.length > 0) {
         const associateResponse = await FileService.associateFilesWithCase(id, uploadResponse.data, token || '');
@@ -167,6 +173,8 @@ export default function CaseDetailPage() {
       return dateString.toString();
     }
   };
+
+  if(!loaded) return null
 
   if (isLoading) {
     return (
@@ -332,7 +340,7 @@ export default function CaseDetailPage() {
             <CardContent>
               {caseData.files && caseData.files.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {caseData.files.map((file) => (
+                  {caseData.files.map((file) => file && (
                     <div key={file._id} className="flex items-center p-3 border rounded group relative">
                       <div className="h-12 w-12 mr-3 overflow-hidden rounded border flex items-center justify-center">
                         <div className="text-center">
@@ -341,9 +349,9 @@ export default function CaseDetailPage() {
                         </div>
                       </div>
                       <div className="overflow-hidden flex-1">
-                        <p className="font-medium truncate">{file.name}</p>
+                        <p className="font-medium truncate">{file?.name || 'Unnamed file'}</p>
                         <p className="text-sm text-muted-foreground">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                          {file?.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
                         </p>
                       </div>
                       <div className="flex items-center">

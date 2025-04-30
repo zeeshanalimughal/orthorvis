@@ -7,6 +7,7 @@ const SERVER_BASE_URL =
 export interface UploadedFile {
   name: string;
   path: string;
+  relativePath?: string;
   size: number;
   mimetype: string;
   uploadedAt: string;
@@ -43,9 +44,11 @@ const FileService = {
    * @returns Promise with upload response
    */
   async uploadFiles(
-    files: File[],
+    files: any[],
     onProgress?: UploadProgressCallback,
-    token?: string
+    token?: string,
+    folderStructure?: any,
+    caseId?: string
   ): Promise<UploadResponse> {
     try {
       if (onProgress) {
@@ -54,9 +57,27 @@ const FileService = {
 
       const formData = new FormData();
 
-      files.forEach((file) => {
+      files.forEach((file: any) => {
         formData.append("files", file);
+        if (file.relativePath || file.webkitRelativePath) {
+          const relativePath = file.relativePath || file.webkitRelativePath;
+          const relativePathStr = typeof relativePath === 'string' ? relativePath : relativePath.toString();
+          formData.append(`relativePath_${file.name}`, relativePathStr);
+          
+          if (relativePathStr.includes('/')) {
+            const folderPath = relativePathStr.substring(0, relativePathStr.lastIndexOf('/'));
+            formData.append(`folderPath_${file.name}`, folderPath);
+          }
+        }
       });
+      
+      if (folderStructure) {
+        formData.append('folderStructure', JSON.stringify(folderStructure));
+      }
+      
+      if (caseId) {
+        formData.append('caseId', caseId);
+      }
 
       const response = await axios.post("/files/upload", formData, {
         headers: {
@@ -93,13 +114,16 @@ const FileService = {
   async associateFilesWithCase(
     caseId: string,
     files: UploadedFile[],
-    token: string
+    token: string,
+    folderStructure?: any
   ): Promise<AssociateFilesResponse> {
     try {
       const response = await axios.post(
         `/files/associate/${caseId}`,
         {
-          files,
+          fileIds: files.map(file => file._id),
+          files: files,
+          folderStructure,
         },
         {
           headers: {

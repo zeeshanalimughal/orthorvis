@@ -6,16 +6,25 @@ import { format } from 'date-fns';
 import { File as FileIcon, ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { FileItem } from './file-upload-form';
+import { useEffect, useState } from 'react';
 
 interface CasePreviewProps {
   patientData: CaseFormData;
-  files: File[];
+  files: FileItem[] | File[];
   onSubmit: () => void;
   isLoading: boolean;
   uploadProgress: number;
 }
 
 export function CasePreview({ patientData, files, onSubmit, isLoading, uploadProgress }: CasePreviewProps) {
+  // Use state to avoid hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  
+  // Only render file content on the client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const getGenderDisplay = (gender: string) => {
     const genders = {
       'male': 'Male',
@@ -34,7 +43,7 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
     return statuses[status as keyof typeof statuses] || status;
   };
 
-  const renderFilePreview = (file: File, index: number) => {
+  const renderFilePreview = (file: FileItem | File, index: number) => {
     return (
       <div key={index} className="flex items-center p-3 border rounded-md mb-2">
         <div className="h-12 w-12 mr-3 overflow-hidden rounded border flex items-center justify-center">
@@ -99,15 +108,19 @@ export function CasePreview({ patientData, files, onSubmit, isLoading, uploadPro
 
         <Card>
           <CardHeader>
-            <CardTitle>Files ({files.length})</CardTitle>
+            <CardTitle>Files ({mounted ? files.length : 0})</CardTitle>
           </CardHeader>
           <CardContent>
-            {files.length > 0 ? (
-              <div className="max-h-[300px] overflow-y-auto">
-                {files.map((file, index) => renderFilePreview(file, index))}
-              </div>
+            {mounted ? (
+              files.length > 0 ? (
+                <div className="max-h-[300px] overflow-y-auto">
+                  {files.map((file, index) => file ? renderFilePreview(file, index) : null)}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-6">No files attached</p>
+              )
             ) : (
-              <p className="text-muted-foreground text-center py-6">No files attached</p>
+              <p className="text-muted-foreground text-center py-6">Loading files...</p>
             )}
           </CardContent>
         </Card>
